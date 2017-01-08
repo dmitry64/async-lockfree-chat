@@ -1,0 +1,6 @@
+package ChatMessage;
+
+message ChatMessage {
+    required string Sender = 3; ///< Идентификатор отправителя
+    required string Text = 4;   ///< Содержание сообщения
+}   
