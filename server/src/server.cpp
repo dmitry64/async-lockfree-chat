@@ -6,7 +6,6 @@
 #include <set>
 #include <utility>
 #include <boost/asio.hpp>
-#include "chat_message.hpp"
 #include "ChatMessage.pb.h"
 #include "google/protobuf/io/zero_copy_stream.h"
 #include "google/protobuf/io/coded_stream.h"
@@ -14,9 +13,6 @@
 
 using boost::asio::ip::tcp;
 
-//----------------------------------------------------------------------
-
-typedef std::deque<chat_message> chat_message_queue;
 
 //----------------------------------------------------------------------
 
@@ -24,45 +20,11 @@ class chat_participant
 {
 public:
     virtual ~chat_participant() {}
-    virtual void deliver(const chat_message& msg) = 0;
+    virtual void deliver(const ChatMessage::ChatMessage& msg) = 0;
 };
 
 typedef std::shared_ptr<chat_participant> chat_participant_ptr;
 
-//----------------------------------------------------------------------
-
-class chat_room
-{
-public:
-    void join(chat_participant_ptr participant)
-    {
-        participants_.insert(participant);
-        for (auto msg: recent_msgs_)
-            participant->deliver(msg);
-    }
-
-    void leave(chat_participant_ptr participant)
-    {
-        participants_.erase(participant);
-    }
-
-    void deliver(const chat_message& msg)
-    {
-        recent_msgs_.push_back(msg);
-        while (recent_msgs_.size() > max_recent_msgs)
-            recent_msgs_.pop_front();
-
-        for (auto participant: participants_)
-            participant->deliver(msg);
-    }
-
-private:
-    std::set<chat_participant_ptr> participants_;
-    enum { max_recent_msgs = 100 };
-    chat_message_queue recent_msgs_;
-};
-
-//----------------------------------------------------------------------
 
 class chat_session
     : public chat_participant,
@@ -73,21 +35,18 @@ class chat_session
     unsigned int _currentMessageSize;
     unsigned char * _currentMessageBuffer;
 public:
-    chat_session(tcp::socket socket, chat_room& room)
-        : socket_(std::move(socket)),
-          room_(room)
+    chat_session(tcp::socket socket)
+        : socket_(std::move(socket))
     {
 
     }
 
     void start()
     {
-        room_.join(shared_from_this());
-
         tryReadHeader();
     }
 
-    void deliver(const chat_message& msg)
+    void deliver(const ChatMessage::ChatMessage& msg)
     {
         //bool write_in_progress = !write_msgs_.empty();
         //write_msgs_.push_back(msg);
@@ -207,9 +166,6 @@ private:
       } */
 
     tcp::socket socket_;
-    chat_room& room_;
-    //chat_message read_msg_;
-    //chat_message_queue write_msgs_;
 };
 
 //----------------------------------------------------------------------
@@ -231,7 +187,7 @@ private:
         acceptor_.async_accept(socket_,
         [this](boost::system::error_code ec) {
             if (!ec) {
-                std::make_shared<chat_session>(std::move(socket_), room_)->start();
+                std::make_shared<chat_session>(std::move(socket_))->start();
             }
 
             do_accept();
@@ -240,7 +196,6 @@ private:
 
     tcp::acceptor acceptor_;
     tcp::socket socket_;
-    chat_room room_;
 };
 
 //----------------------------------------------------------------------

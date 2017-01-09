@@ -12,8 +12,6 @@ using boost::asio::ip::tcp;
 
 class chat_client
 {
-    //char * _msgPtr;
-    //size_t _msgSize;
     std::deque< std::pair<char *, unsigned int> > _encodedMessages;
 public:
     chat_client(boost::asio::io_service& io_service,
@@ -26,26 +24,6 @@ public:
         message.set_text("Text here");
         auto pair = createBufferFromMessage(message);
         _encodedMessages.push_back(pair);
-        /*google::protobuf::uint32 message_length = message.ByteSize();
-        int prefix_length = sizeof(message_length);
-        int buffer_length = prefix_length + message_length;
-        _msgPtr = new char[buffer_length];
-
-        google::protobuf::io::ArrayOutputStream array_output(_msgPtr, buffer_length);
-        google::protobuf::io::CodedOutputStream coded_output(&array_output);
-
-        coded_output.WriteVarint32(message_length);
-        message.SerializeToCodedStream(&coded_output);
-        _msgSize = coded_output.ByteCount();
-
-
-        //message.SerializeToArray(_msgPtr,message_length);
-
-        std::cout << "Size: " << message_length << std::endl;
-        std::cout << "Buffer size: " << buffer_length << std::endl;
-        std::cout << "Stream size: " << coded_output.ByteCount() << std::endl;*/
-
-
 
         do_connect(endpoint_iterator);
     }
@@ -95,7 +73,6 @@ private:
         [this](boost::system::error_code ec, tcp::resolver::iterator) {
             if (!ec) {
                 do_write();
-                //do_read_header();
             }
         });
     }
@@ -148,11 +125,9 @@ private:
                 _encodedMessages.pop_front();
                 if(!ec) {
                     std::cout << "Send!" << std::endl;
-                    //do_write();
                 } else {
                     std::cout << "Error!" << std::endl;
                 }
-
             });
         }
     }
@@ -188,7 +163,6 @@ int main(int argc, char* argv[])
             message.set_sender("Sender");
             message.set_text(line);
             c.write(message);
-
         }
 
         c.close();
