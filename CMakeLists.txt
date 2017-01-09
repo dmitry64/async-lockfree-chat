@@ -4,14 +4,14 @@ set (PROJECT
         chat)
 
 set (SERVER_HEADERS
-        messages/include/chat_message.hpp
+        proto/ChatMessage.pb.h
         )
 
 set (SERVER_SOURCES
         server/src/server.cpp)
 
 set (CLIENT_HEADERS
-        messages/include/chat_message.hpp
+        proto/ChatMessage.pb.h
         )
 
 set (CLIENT_SOURCES
