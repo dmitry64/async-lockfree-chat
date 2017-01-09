@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.1.0 FATAL_ERROR)
+project (proto)
 INCLUDE(FindProtobuf)
 FIND_PACKAGE(Protobuf REQUIRED )
 INCLUDE_DIRECTORIES(${PROTOBUF_INCLUDE_DIR})

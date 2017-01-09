@@ -1,10 +1,11 @@
 #include "chatsession.h"
 
 
-ChatSession::ChatSession(boost::asio::ip::tcp::socket socket, ChatRoom * room)
-    : _socket(std::move(socket)), _room(room)
+ChatSession::ChatSession(boost::asio::io_service &io_service, boost::asio::ip::tcp::socket socket, ChatRoom * room)
+    : _socket(std::move(socket)), _room(room), _io_service(io_service)
 {
-
+    room->subscribe(this);
+    _current = 0;
 }
 
 void ChatSession::start()
@@ -14,7 +15,26 @@ void ChatSession::start()
 
 void ChatSession::deliver(const ChatMessage::ChatMessage &msg)
 {
+    std::cout << "Delivering: " << msg.text() << " from: " << msg.sender() << std::endl;
+}
 
+unsigned int ChatSession::getLastReceivedMessageNumber()
+{
+    return _current;
+}
+
+void ChatSession::prepareToSync()
+{
+    std::cout << "prepareToSync" << std::endl;
+    _io_service.post(
+    [this]() {
+        std::cout << "prepareToSync post" << std::endl;
+
+        auto temp = _room->getMessagesFromSpecificNumber(_current);
+        for(int i=0; i<temp.size(); i++) {
+            deliver(temp.at(i)->second);
+        }
+    });
 }
 
 void ChatSession::tryReadHeader()
@@ -58,10 +78,7 @@ void ChatSession::tryReadBody()
             ChatMessage::ChatMessage msg;
             if(msg.ParseFromCodedStream(&input)) {
                 std::cout << "Message: " << msg.text() << " From: " << msg.sender() << std::endl;
-                std::pair<std::string, std::string> pair;
-                pair.first = msg.sender();
-                pair.second = msg.text();
-                _room->addMessage(pair);
+                _room->addMessage(msg);
             }
             tryReadHeader();
         } else {
