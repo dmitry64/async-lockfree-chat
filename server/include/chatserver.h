@@ -1,6 +1,7 @@
 #ifndef CHATSERVER_H
 #define CHATSERVER_H
 #include "chatsession.h"
+#include "chatroom.h"
 #include <boost/asio.hpp>
 
 class ChatServer
@@ -11,6 +12,7 @@ public:
     ChatServer(boost::asio::io_service& io_service, const boost::asio::ip::tcp::endpoint& endpoint);
 private:
     void doAccept();
+    ChatRoom * _room;
 };
 
 #endif // CHATSERVER_H

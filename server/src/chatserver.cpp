@@ -5,6 +5,7 @@ ChatServer::ChatServer(boost::asio::io_service &io_service, const boost::asio::i
     : _acceptor(io_service, endpoint),
       _socket(io_service)
 {
+    _room = new ChatRoom();
     doAccept();
 }
 
@@ -13,7 +14,7 @@ void ChatServer::doAccept()
     _acceptor.async_accept(_socket,
     [this](boost::system::error_code ec) {
         if (!ec) {
-            std::make_shared<ChatSession>(std::move(_socket))->start();
+            std::make_shared<ChatSession>(std::move(_socket),_room)->start();
         }
         doAccept();
     });

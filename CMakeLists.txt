@@ -6,19 +6,23 @@ set (PROJECT
 set (SERVER_HEADERS
         server/include/chatsession.h
         server/include/chatserver.h
+        server/include/chatroom.h
         proto/ChatMessage.pb.h
         )
 
 set (SERVER_SOURCES
         server/src/chatsession.cpp
         server/src/chatserver.cpp
+        server/src/chatroom.cpp
         server/src/server.cpp)
 
 set (CLIENT_HEADERS
+        client/include/chatclient.h
         proto/ChatMessage.pb.h
         )
 
 set (CLIENT_SOURCES
+        client/src/chatclient.cpp
         client/src/client.cpp)
 
 set (BOOST_COMPONENTS
@@ -34,7 +38,6 @@ project (${PROJECT})
 add_subdirectory(proto)
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR}/proto)
-include_directories (messages/include)
 include_directories (server/include)
 include_directories (client/include)
 
