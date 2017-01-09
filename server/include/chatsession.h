@@ -8,19 +8,9 @@
 #include "google/protobuf/io/coded_stream.h"
 #include "google/protobuf/io/zero_copy_stream_impl.h"
 
-class chat_participant
-{
-public:
-    virtual ~chat_participant() {}
-    virtual void deliver(const ChatMessage::ChatMessage& msg) = 0;
-};
-
-typedef std::shared_ptr<chat_participant> chat_participant_ptr;
 
 
-
-class ChatSession : public chat_participant,
-        public std::enable_shared_from_this<ChatSession>
+class ChatSession : public std::enable_shared_from_this<ChatSession>
 {
     std::vector<google::protobuf::uint8> _bytesArray;
     char _temp;
@@ -28,7 +18,7 @@ class ChatSession : public chat_participant,
     unsigned char * _currentMessageBuffer;
 public:
     ChatSession(boost::asio::ip::tcp::socket socket)
-        : socket_(std::move(socket))
+        : _socket(std::move(socket))
     {
 
     }
@@ -40,19 +30,14 @@ public:
 
     void deliver(const ChatMessage::ChatMessage& msg)
     {
-        //bool write_in_progress = !write_msgs_.empty();
-        //write_msgs_.push_back(msg);
-        //if (!write_in_progress)
-        //{
-        //do_write();
-        //}
+
     }
 
 private:
     void tryReadHeader()
     {
         auto self(shared_from_this());
-        boost::asio::async_read(socket_,
+        boost::asio::async_read(_socket,
                                 boost::asio::buffer(&_temp, 1),
         [this, self](boost::system::error_code ec, std::size_t) {
             if (!ec) {
@@ -80,7 +65,7 @@ private:
     {
         auto self(shared_from_this());
 
-        boost::asio::async_read(socket_,
+        boost::asio::async_read(_socket,
                                 boost::asio::buffer(_currentMessageBuffer, _currentMessageSize),
         [this, self](boost::system::error_code ec, std::size_t) {
             if (!ec) {
@@ -97,67 +82,7 @@ private:
         });
     }
 
-    /*  void do_read_header()
-      {
-        auto self(shared_from_this());
-        boost::asio::async_read(socket_,
-            boost::asio::buffer(read_msg_.data(), chat_message::header_length),
-            [this, self](boost::system::error_code ec, std::size_t)
-            {
-              if (!ec && read_msg_.decode_header())
-              {
-                do_read_body();
-              }
-              else
-              {
-                room_.leave(shared_from_this());
-              }
-            });
-      }
-
-      void do_read_body()
-      {
-        auto self(shared_from_this());
-        boost::asio::async_read(socket_,
-            boost::asio::buffer(read_msg_.body(), read_msg_.body_length()),
-            [this, self](boost::system::error_code ec, std::size_t)
-            {
-              if (!ec)
-              {
-                room_.deliver(read_msg_);
-                do_read_header();
-              }
-              else
-              {
-                room_.leave(shared_from_this());
-              }
-            });
-      }
-
-      void do_write()
-      {
-        auto self(shared_from_this());
-        boost::asio::async_write(socket_,
-            boost::asio::buffer(write_msgs_.front().data(),
-              write_msgs_.front().length()),
-            [this, self](boost::system::error_code ec, std::size_t )
-            {
-              if (!ec)
-              {
-                write_msgs_.pop_front();
-                if (!write_msgs_.empty())
-                {
-                  do_write();
-                }
-              }
-              else
-              {
-                room_.leave(shared_from_this());
-              }
-            });
-      } */
-
-    boost::asio::ip::tcp::socket socket_;
+    boost::asio::ip::tcp::socket _socket;
 };
 
 #endif // CHATSESSION_H
