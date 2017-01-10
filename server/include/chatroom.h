@@ -3,20 +3,22 @@
 #include <string>
 #include <vector>
 #include <deque>
-#include <mutex>
+//#include <mutex>
+#include <boost/shared_ptr.hpp>
 #include "chatsubscriber.h"
 #include "ChatMessage.pb.h"
 
 class ChatRoom
 {
-    pthread_mutex_t _mutex;
-    std::vector< std::pair<unsigned int, ChatMessage::ChatMessage> > _messages;
+    //pthread_mutex_t _mutex;
+    //boost::lockfree::stack< std::pair<unsigned int, ChatMessage::ChatMessage> > _messages;
+    //std::vector< std::pair<unsigned int, ChatMessage::ChatMessage> > _messages;
     std::deque< ChatSubscriber* > _subscribers;
 public:
     ChatRoom();
     void addMessage(ChatMessage::ChatMessage & msg);
     void subscribe(ChatSubscriber* sub);
-    std::vector< std::pair<unsigned int, ChatMessage::ChatMessage> * > getMessagesFromSpecificNumber(unsigned int &num);
+    //void unsubscribe(ChatSubscriber* sub);
 };
 
 #endif // CHATROOM_H

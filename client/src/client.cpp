@@ -25,11 +25,11 @@ int main(int argc, char* argv[])
         });
 
         char line[128];
-        while (std::cin.getline(line, 128)) {
+        while (std::cin.getline(line, 128)) { //
             std::cout << "new line" << std::endl;
             ChatMessage::ChatMessage message;
             message.set_sender("Sender");
-            message.set_text(line);
+            message.set_text("asdfasdfasdfasdf12341234asdasdzxcbn.");
             c.write(message);
         }
 

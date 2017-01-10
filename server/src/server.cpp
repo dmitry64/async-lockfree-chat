@@ -26,9 +26,10 @@ int main(int argc, char* argv[])
             servers.emplace_back(io_service, endpoint);
         }
 
-        for (int i = 0; i < 8; ++i) {
+        for (int i = 0; i < 4; ++i) {
             threads.create_thread(boost::bind(&boost::asio::io_service::run, &io_service));
         }
+        io_service.run();
         threads.join_all();
     } catch (std::exception& e) {
         std::cerr << "Exception: " << e.what() << "\n";
