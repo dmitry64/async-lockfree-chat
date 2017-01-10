@@ -20,12 +20,12 @@ std::pair<char *, unsigned int> ChatClient::createBufferFromMessage(const ChatMe
 
 void ChatClient::write(const ChatMessage::ChatMessage &msg)
 {
-    std::cout << "write" << std::endl;
+    //std::cout << "write" << std::endl;
     //auto pair = createBufferFromMessage(msg);
     //_encodedMessages.push_back(pair);
     io_service_.post(
     [this, msg]() {
-        std::cout << "post" << std::endl;
+        //std::cout << "post" << std::endl;
         do_write();
     });
 }
@@ -34,7 +34,7 @@ void ChatClient::do_write()
 {
     //std::cout << "do_write!" << std::endl;
     //if(!_encodedMessages.empty()) {
-    usleep(10000);
+    usleep(100);
         boost::asio::async_write(_socket,
                                  boost::asio::buffer(test.first,
                                          test.second),
@@ -42,8 +42,9 @@ void ChatClient::do_write()
             //delete _encodedMessages.front().first;
 
             if(!ec) {
+
                // _encodedMessages.pop_front();
-                std::cout << "Send!" << std::endl;
+                //std::cout << "Send!" << std::endl;
             } else {
                 std::cout << "Error!" << std::endl;
             }
@@ -59,11 +60,11 @@ void ChatClient::tryReadHeader()
     [this](boost::system::error_code ec, std::size_t) {
         if (!ec) {
             _bytesArray.push_back(_temp);
-            std::cout << "Got char! " << _temp << std::endl;
+            //std::cout << "Got char! " << _temp << std::endl;
             google::protobuf::io::CodedInputStream input(_bytesArray.data(),_bytesArray.size());
             google::protobuf::uint32 result;
             if(input.ReadVarint32(&result)) {
-                std::cout << "Incoming message size: " << result << std::endl;
+                //std::cout << "Incoming message size: " << result << std::endl;
                 _currentMessageSize = result;
                 _currentMessageBuffer = new unsigned char[result];
                 _bytesArray.clear();
@@ -89,7 +90,7 @@ void ChatClient::tryReadBody()
             google::protobuf::io::CodedInputStream input(_currentMessageBuffer, _currentMessageSize);
             ChatMessage::ChatMessage msg;
             if(msg.ParseFromCodedStream(&input)) {
-                std::cout << "Message: " << msg.text() << " From: " << msg.sender() << std::endl;
+                //std::cout << "Message: " << msg.text() << " From: " << msg.sender() << std::endl;
 
             }
             tryReadHeader();

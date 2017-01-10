@@ -18,7 +18,7 @@ int main(int argc, char* argv[])
             return 1;
         }
 
-        boost::asio::io_service io_service;
+        boost::asio::io_service io_service(4);
         boost::thread_group threads;
         std::list<ChatServer> servers;
         for (int i = 1; i < argc; ++i) {
@@ -29,11 +29,16 @@ int main(int argc, char* argv[])
         for (int i = 0; i < 4; ++i) {
             threads.create_thread(boost::bind(&boost::asio::io_service::run, &io_service));
         }
-        io_service.run();
+        std::cout << "Running!" << std::endl;
+        std::cin.get();
+        io_service.stop();
+
         threads.join_all();
     } catch (std::exception& e) {
         std::cerr << "Exception: " << e.what() << "\n";
     }
+
+    google::protobuf::ShutdownProtobufLibrary();
 
     return 0;
 }

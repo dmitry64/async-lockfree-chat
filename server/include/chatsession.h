@@ -5,28 +5,27 @@
 #include <boost/asio.hpp>
 #include "chatsubscriber.h"
 #include "chatroom.h"
-
-
 #include "google/protobuf/io/zero_copy_stream.h"
 #include "google/protobuf/io/coded_stream.h"
 #include "google/protobuf/io/zero_copy_stream_impl.h"
+#include <pthread.h>
 
 class ChatSession : public ChatSubscriber
 {
     std::vector<google::protobuf::uint8> _bytesArray;
-    bool _valid;
     char _temp;
     unsigned int _currentMessageSize;
     unsigned char * _currentMessageBuffer;
     boost::asio::io_service& _io_service;
-
+    //pthread_spinlock_t _spinlock;
 public:
     ChatSession(boost::asio::io_service& io_service, boost::asio::ip::tcp::socket socket, ChatRoom * room);
     ~ChatSession();
     void start();
-    void deliver(const SimpleMessage &msg);
-    void invalidate();
+    void putMessage(const ChatMessage::ChatMessage &msg);
+    //void invalidate();
     std::pair<char *, unsigned int> createBufferFromMessage(const ChatMessage::ChatMessage &message);
+    //void putMessage(const ChatMessage::ChatMessage &msg);
 private:
     void tryReadHeader();
     void tryReadBody();

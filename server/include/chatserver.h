@@ -11,6 +11,7 @@ class ChatServer
     boost::asio::io_service& _io_service;
 public:
     ChatServer(boost::asio::io_service& io_service, const boost::asio::ip::tcp::endpoint& endpoint);
+    ~ChatServer();
 private:
     void doAccept();
     ChatRoom * _room;

@@ -2,14 +2,18 @@
 
 
 ChatSession::ChatSession(boost::asio::io_service &io_service, boost::asio::ip::tcp::socket socket, ChatRoom * room)
-    : _socket(std::move(socket)), _room(room), _io_service(io_service)
+    : _socket(std::move(socket)), _room(room), _io_service(io_service), _currentMessageBuffer(0), _currentMessageSize(0), _temp(0)
 {
     room->subscribe(this);
+    //pthread_spin_init(_spinlock, PTHREAD_PROCESS_PRIVATE);
 }
 
 ChatSession::~ChatSession()
 {
-    //_room->unsubscribe(this);
+    //pthread_spin_lock(_spinlock);
+    _room->unsubscribe(this);
+    _socket.cancel();
+    _socket.close();
 }
 
 void ChatSession::start()
@@ -35,34 +39,37 @@ std::pair<char *, unsigned int> ChatSession::createBufferFromMessage(const ChatM
     return buffer;
 }
 
-
-void ChatSession::deliver(const SimpleMessage &msg)
+/*void ChatSession::putMessage(const ChatMessage::ChatMessage &msg)
 {
-    auto self(shared_from_this());
-    if(_socket.is_open()) {
-        std::cout << "Delivering: " << msg.text << " from: " << msg.sender << std::endl;
-        ChatMessage::ChatMessage message;
-        message.set_text(msg.text);
-        message.set_sender(msg.sender);
-        auto buf = createBufferFromMessage(message);
-        usleep(1000);
+    deliver(msg);
+}*/
+
+void ChatSession::putMessage(const ChatMessage::ChatMessage &msg)
+{
+    //auto self(shared_from_this());
+    if(!_isDead && _socket.is_open()) {
+        //std::cout << "Delivering: " << msg.text() << " from: " << msg.sender() << std::endl;
+
+        auto buf = createBufferFromMessage(msg);
+
         boost::asio::async_write(_socket,
                                  boost::asio::buffer(buf.first,
                                          buf.second),
-        [this, self, msg, buf](boost::system::error_code ec, std::size_t ) {
-            delete buf.first;
+        [this, msg, buf](boost::system::error_code ec, std::size_t ) {
+            delete[] buf.first;
 
             if(!ec) {
-                std::cout << "Send!" << std::endl;
+                //std::cout << "Send!" << std::endl;
             } else {
-                std::cout << "send Error!" << std::endl;
+                //std::cout << "send Error!" << std::endl;
+
                 //_room->unsubscribe(this);
             }
         });
     }
 }
 
-void ChatSession::invalidate()
+/*void ChatSession::invalidate()
 {
     std::cout << "prepareToSync" << std::endl;
     auto self(shared_from_this());
@@ -82,12 +89,12 @@ void ChatSession::invalidate()
         });
     } else {
     }
-}
+}*/
 
 void ChatSession::tryReadHeader()
 {
     auto self(shared_from_this());
-    if(!_isDead) {
+    if(!_isDead && _socket.is_open()) {
         boost::asio::async_read(_socket,
                                 boost::asio::buffer(&_temp, 1),
         [this, self](boost::system::error_code ec, std::size_t) {
@@ -97,7 +104,7 @@ void ChatSession::tryReadHeader()
                 google::protobuf::io::CodedInputStream input(_bytesArray.data(),_bytesArray.size());
                 google::protobuf::uint32 result;
                 if(input.ReadVarint32(&result)) {
-                    std::cout << "Incoming message size: " << result << std::endl;
+                    //std::cout << "Incoming message size: " << result << std::endl;
                     _currentMessageSize = result;
                     _currentMessageBuffer = new unsigned char[result];
                     _bytesArray.clear();
@@ -115,7 +122,7 @@ void ChatSession::tryReadHeader()
 void ChatSession::tryReadBody()
 {
     auto self(shared_from_this());
-    if(!_isDead) {
+    if(!_isDead && _socket.is_open()) {
         boost::asio::async_read(_socket,
                                 boost::asio::buffer(_currentMessageBuffer, _currentMessageSize),
         [this, self](boost::system::error_code ec, std::size_t) {
@@ -125,11 +132,12 @@ void ChatSession::tryReadBody()
                 ChatMessage::ChatMessage msg;
                 if(msg.ParseFromCodedStream(&input)) {
                     //std::cout << "Message: " << msg.text() << " From: " << msg.sender() << std::endl;
-                    delete _currentMessageBuffer;
+                    delete[] _currentMessageBuffer;
                     _room->addMessage(msg);
                 }
                 tryReadHeader();
             } else {
+                delete[] _currentMessageBuffer;
                 std::cout << "read body Error! " << std::endl;
             }
         });

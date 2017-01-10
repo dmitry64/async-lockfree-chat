@@ -8,7 +8,7 @@
 #include "google/protobuf/io/zero_copy_stream.h"
 #include "google/protobuf/io/coded_stream.h"
 #include "google/protobuf/io/zero_copy_stream_impl.h"
-
+#include <boost/lexical_cast.hpp>
 
 class ChatClient
 {
@@ -28,7 +28,7 @@ public:
     {
         ChatMessage::ChatMessage message;
         message.set_sender("Sender");
-        message.set_text("Text here");
+        message.set_text("Text here" + boost::lexical_cast<std::string>(2017));
         auto pair = createBufferFromMessage(message);
         //_encodedMessages.push_back(pair);
         test = pair;

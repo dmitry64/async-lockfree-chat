@@ -10,6 +10,12 @@ ChatServer::ChatServer(boost::asio::io_service &io_service, const boost::asio::i
     doAccept();
 }
 
+ChatServer::~ChatServer()
+{
+    _acceptor.cancel();
+    delete _room;
+}
+
 void ChatServer::doAccept()
 {
     _acceptor.async_accept(_socket,

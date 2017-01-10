@@ -15,13 +15,13 @@ public:
     };
     ChatSubscriber();
     virtual ~ChatSubscriber();
-    virtual void invalidate() = 0;
-    void putMessage(ChatMessage::ChatMessage &msg);
+    //virtual void invalidate() = 0;
+    virtual void putMessage(const ChatMessage::ChatMessage &msg) = 0;
     bool isDead() const;
-
+    //std::atomic<unsigned int> _workersCount;
 protected:
     bool _isDead;
-    boost::lockfree::queue<SimpleMessage> * _messages;
+   // boost::lockfree::queue<SimpleMessage> * _messages;
 };
 
 #endif // CHATSUBSCRIBER_H
