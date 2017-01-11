@@ -34,7 +34,7 @@ void ChatClient::do_write()
 {
     //std::cout << "do_write!" << std::endl;
     //if(!_encodedMessages.empty()) {
-    usleep(100);
+    usleep(1000);
     boost::asio::async_write(_socket,
                              boost::asio::buffer(test.first,
                                      test.second),

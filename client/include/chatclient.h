@@ -26,9 +26,10 @@ public:
         : io_service_(io_service),
           _socket(io_service)
     {
+
         ChatMessage::ChatMessage message;
-        message.set_sender("Sender");
-        message.set_text("Text here" + boost::lexical_cast<std::string>(2017));
+        message.set_sender("Sender #" + boost::lexical_cast<std::string>(getpid()));
+        message.set_text("Text here " + boost::lexical_cast<std::string>(2017));
         auto pair = createBufferFromMessage(message);
         //_encodedMessages.push_back(pair);
         test = pair;
