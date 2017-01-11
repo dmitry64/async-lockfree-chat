@@ -26,7 +26,7 @@ typedef cds::container::IterableList< cds::gc::HP, ChatSubscriber*,
 
 class ChatRoom
 {
-    ClientsList _list;
+    ClientsList _connectedClientsList;
 public:
     ChatRoom();
     ~ChatRoom();

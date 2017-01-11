@@ -5,6 +5,7 @@ ChatSession::ChatSession(boost::asio::io_service &io_service, boost::asio::ip::t
     : _socket(std::move(socket)), _room(room), _io_service(io_service), _temp(0)
 {
     room->subscribe(this);
+    std::cout << "Client connected" << std::endl;
 }
 
 ChatSession::~ChatSession()
@@ -62,6 +63,7 @@ void ChatSession::tryReadHeader()
                 google::protobuf::io::CodedInputStream input(_headerBuffer.data(),_headerBuffer.size());
                 google::protobuf::uint32 result;
                 if(input.ReadVarint32(&result)) {
+                    _bodyBuffer.clear();
                     _bodyBuffer.resize(result);
                     _headerBuffer.clear();
                     tryReadBody();
@@ -87,6 +89,9 @@ void ChatSession::tryReadBody()
                 if(msg.ParseFromCodedStream(&input)) {
                     std::cout << "Message: " << msg.text() << " From: " << msg.sender() << std::endl;
                     _room->addMessage(msg);
+                }
+                else {
+                    std::cout << "Garbage: " << _bodyBuffer.size()<< std::endl;
                 }
                 _bodyBuffer.clear();
                 tryReadHeader();

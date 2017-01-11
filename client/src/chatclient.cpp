@@ -22,13 +22,9 @@ std::vector<google::protobuf::uint8> ChatClient::createBufferFromMessage(const C
 void ChatClient::write(const ChatMessage::ChatMessage &msg)
 {
     auto buf = createBufferFromMessage(msg);
-    boost::asio::async_write(_socket,
-                             boost::asio::buffer(buf.data(), buf.size()),
-    [this](boost::system::error_code ec, std::size_t ) {
-        if(ec) {
-            std::cout << "Error!" << ec.message() << std::endl;
-        }
-    });
+    boost::asio::write(
+        _socket, boost::asio::buffer(buf.data(), buf.size()),
+        boost::asio::transfer_all());
 }
 
 void ChatClient::tryReadHeader()

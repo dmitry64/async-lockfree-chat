@@ -18,7 +18,6 @@ class ChatClient
     char _temp;
     std::vector<google::protobuf::uint8> _headerBuffer;
     std::vector<google::protobuf::uint8> _bodyBuffer;
-
 public:
     ChatClient(boost::asio::io_service& io_service,
                boost::asio::ip::tcp::resolver::iterator end_iterator)

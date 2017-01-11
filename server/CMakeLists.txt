@@ -6,8 +6,7 @@ set (SERVER_HEADERS
         include/chatsession.h
         include/chatserver.h
         include/chatroom.h
-        include/chatsubscriber.h
-        )
+        include/chatsubscriber.h)
 
 set (SERVER_SOURCES
         src/chatsession.cpp

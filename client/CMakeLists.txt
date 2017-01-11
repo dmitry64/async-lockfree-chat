@@ -3,9 +3,7 @@ cmake_minimum_required(VERSION 3.1.0 FATAL_ERROR)
 project (client)
 
 set (CLIENT_HEADERS
-        include/chatclient.h
-
-        )
+        include/chatclient.h)
 
 set (CLIENT_SOURCES
         src/chatclient.cpp
