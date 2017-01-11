@@ -11,19 +11,19 @@
 
 class ChatSession : public ChatSubscriber
 {
-    std::vector<google::protobuf::uint8> _bytesArray;
+    std::vector<google::protobuf::uint8> _headerBuffer;
+    std::vector<google::protobuf::uint8> _bodyBuffer;
     char _temp;
     unsigned int _currentMessageSize;
     unsigned char * _currentMessageBuffer;
+
     boost::asio::io_service& _io_service;
 public:
     ChatSession(boost::asio::io_service& io_service, boost::asio::ip::tcp::socket socket, ChatRoom * room);
     ~ChatSession();
     void start();
     void putMessage(const ChatMessage::ChatMessage &msg);
-    //void invalidate();
-    std::pair<char *, unsigned int> createBufferFromMessage(const ChatMessage::ChatMessage &message);
-    //void putMessage(const ChatMessage::ChatMessage &msg);
+    std::vector<google::protobuf::uint8> createBufferFromMessage(const ChatMessage::ChatMessage &message);
 private:
     void tryReadHeader();
     void tryReadBody();

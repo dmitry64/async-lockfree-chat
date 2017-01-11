@@ -12,7 +12,7 @@ ChatSession::~ChatSession()
     _room->unsubscribe(this);
     _socket.cancel();
     _socket.close();
-    std::cout << "User disconnected" << std::endl;
+    std::cout << "Client disconnected" << std::endl;
 }
 
 void ChatSession::start()
@@ -20,20 +20,21 @@ void ChatSession::start()
     tryReadHeader();
 }
 
-std::pair<char *, unsigned int> ChatSession::createBufferFromMessage(const ChatMessage::ChatMessage &message)
+std::vector<google::protobuf::uint8> ChatSession::createBufferFromMessage(const ChatMessage::ChatMessage &message)
 {
-    std::pair<char *, unsigned int> buffer;
-    google::protobuf::uint32 message_length = message.ByteSize();
-    int prefix_length = sizeof(message_length);
-    int buffer_length = prefix_length + message_length;
-    buffer.first = new char[buffer_length];
+    std::vector<google::protobuf::uint8> buffer;
 
-    google::protobuf::io::ArrayOutputStream array_output(buffer.first, buffer_length);
+    google::protobuf::uint32 messageLength = message.ByteSize();
+    int prefixLength = sizeof(messageLength);
+    int maxBufferLength = prefixLength + messageLength;
+    buffer.resize(maxBufferLength);
+
+    google::protobuf::io::ArrayOutputStream array_output(buffer.data(), buffer.size());
     google::protobuf::io::CodedOutputStream coded_output(&array_output);
 
-    coded_output.WriteVarint32(message_length);
+    coded_output.WriteVarint32(messageLength);
     message.SerializeToCodedStream(&coded_output);
-    buffer.second = coded_output.ByteCount();
+    buffer.resize(coded_output.ByteCount());
 
     return buffer;
 }
@@ -44,10 +45,8 @@ void ChatSession::putMessage(const ChatMessage::ChatMessage &msg)
         auto buf = createBufferFromMessage(msg);
 
         boost::asio::async_write(_socket,
-                                 boost::asio::buffer(buf.first, buf.second),
-        [this, msg, buf](boost::system::error_code ec, std::size_t ) {
-            delete[] buf.first;
-        });
+                                 boost::asio::buffer(buf.data(), buf.size()),
+        [this, buf](boost::system::error_code ec, std::size_t ) {});
     }
 }
 
@@ -59,13 +58,12 @@ void ChatSession::tryReadHeader()
                                 boost::asio::buffer(&_temp, 1),
         [this, self](boost::system::error_code ec, std::size_t) {
             if (!ec) {
-                _bytesArray.push_back(_temp);
-                google::protobuf::io::CodedInputStream input(_bytesArray.data(),_bytesArray.size());
+                _headerBuffer.push_back(_temp);
+                google::protobuf::io::CodedInputStream input(_headerBuffer.data(),_headerBuffer.size());
                 google::protobuf::uint32 result;
                 if(input.ReadVarint32(&result)) {
-                    _currentMessageSize = result;
-                    _currentMessageBuffer = new unsigned char[result];
-                    _bytesArray.clear();
+                    _bodyBuffer.resize(result);
+                    _headerBuffer.clear();
                     tryReadBody();
                 }
                 else {
@@ -81,20 +79,17 @@ void ChatSession::tryReadBody()
     auto self(shared_from_this());
     if(!_isDead && _socket.is_open()) {
         boost::asio::async_read(_socket,
-                                boost::asio::buffer(_currentMessageBuffer, _currentMessageSize),
+                                boost::asio::buffer(_bodyBuffer.data(), _bodyBuffer.size()),
         [this, self](boost::system::error_code ec, std::size_t) {
             if (!ec) {
-                google::protobuf::io::CodedInputStream input(_currentMessageBuffer, _currentMessageSize);
+                google::protobuf::io::CodedInputStream input(_bodyBuffer.data(), _bodyBuffer.size());
                 ChatMessage::ChatMessage msg;
                 if(msg.ParseFromCodedStream(&input)) {
                     std::cout << "Message: " << msg.text() << " From: " << msg.sender() << std::endl;
-                    delete[] _currentMessageBuffer;
                     _room->addMessage(msg);
                 }
+                _bodyBuffer.clear();
                 tryReadHeader();
-            }
-            else {
-                delete[] _currentMessageBuffer;
             }
         });
     }

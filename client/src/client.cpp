@@ -13,6 +13,8 @@ int main(int argc, char* argv[])
             return 1;
         }
 
+        std::string clientName = "Client #" + boost::lexical_cast<std::string>(getpid());
+
         boost::asio::io_service io_service;
         boost::asio::io_service::work work(io_service);
 
@@ -24,18 +26,20 @@ int main(int argc, char* argv[])
             io_service.run();
         });
 
-        char line[128];
-        while (std::cin.getline(line, 128)) { //
-            std::cout << "new line" << std::endl;
+        std::string temp;
+
+        while(true) {
+            std::cin >> temp;
             ChatMessage::ChatMessage message;
-            message.set_sender("Sender");
-            message.set_text("asdfasdfasdfasdf12341234asdasdzxcbn.");
+            message.set_sender(clientName);
+            message.set_text(temp);
             c.write(message);
         }
 
         c.close();
         t.join();
-    } catch (std::exception& e) {
+    }
+    catch (std::exception& e) {
         std::cerr << "Exception: " << e.what() << "\n";
     }
 

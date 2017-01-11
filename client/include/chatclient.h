@@ -2,6 +2,7 @@
 #define CHATCLIENT_H
 
 #include <iostream>
+#include <iomanip>
 #include <deque>
 #include <boost/asio.hpp>
 #include "ChatMessage.pb.h"
@@ -12,32 +13,23 @@
 
 class ChatClient
 {
-    std::deque< std::pair<char *, unsigned int> > _encodedMessages;
     boost::asio::io_service& io_service_;
     boost::asio::ip::tcp::socket _socket;
-    unsigned int _currentMessageSize;
-    unsigned char * _currentMessageBuffer;
+
     char _temp;
-    std::vector<google::protobuf::uint8> _bytesArray;
-    std::pair<char *, unsigned int> test;
+    std::vector<google::protobuf::uint8> _headerBuffer;
+    std::vector<google::protobuf::uint8> _bodyBuffer;
+
 public:
     ChatClient(boost::asio::io_service& io_service,
                boost::asio::ip::tcp::resolver::iterator end_iterator)
         : io_service_(io_service),
           _socket(io_service)
     {
-
-        ChatMessage::ChatMessage message;
-        message.set_sender("Sender #" + boost::lexical_cast<std::string>(getpid()));
-        message.set_text("Text here " + boost::lexical_cast<std::string>(2017));
-        auto pair = createBufferFromMessage(message);
-        //_encodedMessages.push_back(pair);
-        test = pair;
-
         do_connect(end_iterator);
     }
 
-    std::pair<char *, unsigned int> createBufferFromMessage(const ChatMessage::ChatMessage & message);
+    std::vector<google::protobuf::uint8> createBufferFromMessage(const ChatMessage::ChatMessage & message);
 
     void write(const ChatMessage::ChatMessage& msg);
     void close();
@@ -51,13 +43,10 @@ private:
         boost::asio::async_connect(_socket, end_iterator,
         [this](boost::system::error_code ec, boost::asio::ip::tcp::resolver::iterator) {
             if (!ec) {
-                do_write();
                 tryReadHeader();
             }
         });
     }
-    void do_write();
-
 
 };
 

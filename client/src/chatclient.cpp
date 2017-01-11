@@ -1,108 +1,76 @@
 #include "chatclient.h"
 
-std::pair<char *, unsigned int> ChatClient::createBufferFromMessage(const ChatMessage::ChatMessage &message)
+std::vector<google::protobuf::uint8> ChatClient::createBufferFromMessage(const ChatMessage::ChatMessage &message)
 {
-    std::pair<char *, unsigned int> buffer;
-    google::protobuf::uint32 message_length = message.ByteSize();
-    int prefix_length = sizeof(message_length);
-    int buffer_length = prefix_length + message_length;
-    buffer.first = new char[buffer_length];
+    std::vector<google::protobuf::uint8> buffer;
 
-    google::protobuf::io::ArrayOutputStream array_output(buffer.first, buffer_length);
+    google::protobuf::uint32 messageLength = message.ByteSize();
+    int prefixLength = sizeof(messageLength);
+    int maxBufferLength = prefixLength + messageLength;
+    buffer.resize(maxBufferLength);
+
+    google::protobuf::io::ArrayOutputStream array_output(buffer.data(), buffer.size());
     google::protobuf::io::CodedOutputStream coded_output(&array_output);
 
-    coded_output.WriteVarint32(message_length);
+    coded_output.WriteVarint32(messageLength);
     message.SerializeToCodedStream(&coded_output);
-    buffer.second = coded_output.ByteCount();
+    buffer.resize(coded_output.ByteCount());
 
     return buffer;
 }
 
 void ChatClient::write(const ChatMessage::ChatMessage &msg)
 {
-    //std::cout << "write" << std::endl;
-    //auto pair = createBufferFromMessage(msg);
-    //_encodedMessages.push_back(pair);
-    io_service_.post(
-    [this, msg]() {
-        //std::cout << "post" << std::endl;
-        do_write();
-    });
-}
-
-void ChatClient::do_write()
-{
-    //std::cout << "do_write!" << std::endl;
-    //if(!_encodedMessages.empty()) {
-    usleep(1000);
+    auto buf = createBufferFromMessage(msg);
     boost::asio::async_write(_socket,
-                             boost::asio::buffer(test.first,
-                                     test.second),
+                             boost::asio::buffer(buf.data(), buf.size()),
     [this](boost::system::error_code ec, std::size_t ) {
-        //delete _encodedMessages.front().first;
-
-        if(!ec) {
-
-            // _encodedMessages.pop_front();
-            //std::cout << "Send!" << std::endl;
+        if(ec) {
+            std::cout << "Error!" << ec.message() << std::endl;
         }
-        else {
-            std::cout << "Error!" << std::endl;
-        }
-        do_write();
     });
-    //}
 }
 
 void ChatClient::tryReadHeader()
 {
-    boost::asio::async_read(_socket,
-                            boost::asio::buffer(&_temp, 1),
-    [this](boost::system::error_code ec, std::size_t) {
-        if (!ec) {
-            _bytesArray.push_back(_temp);
-            //std::cout << "Got char! " << _temp << std::endl;
-            google::protobuf::io::CodedInputStream input(_bytesArray.data(),_bytesArray.size());
-            google::protobuf::uint32 result;
-            if(input.ReadVarint32(&result)) {
-                //std::cout << "Incoming message size: " << result << std::endl;
-                _currentMessageSize = result;
-                _currentMessageBuffer = new unsigned char[result];
-                _bytesArray.clear();
-                tryReadBody();
+    if(_socket.is_open()) {
+        boost::asio::async_read(_socket,
+                                boost::asio::buffer(&_temp, 1),
+        [this](boost::system::error_code ec, std::size_t) {
+            if (!ec) {
+                _headerBuffer.push_back(_temp);
+                google::protobuf::io::CodedInputStream input(_headerBuffer.data(),_headerBuffer.size());
+                google::protobuf::uint32 result;
+                if(input.ReadVarint32(&result)) {
+                    _bodyBuffer.resize(result);
+                    _headerBuffer.clear();
+                    tryReadBody();
+                }
+                else {
+                    tryReadHeader();
+                }
             }
-            else {
-                tryReadHeader();
-            }
-        }
-        else {
-            std::cout << "read head Error! " << std::endl;
-            _socket.close();
-        }
-
-    });
+        });
+    }
 }
 
 void ChatClient::tryReadBody()
 {
-    boost::asio::async_read(_socket,
-                            boost::asio::buffer(_currentMessageBuffer, _currentMessageSize),
-    [this](boost::system::error_code ec, std::size_t) {
-        if (!ec) {
-            //std::cout << "Got body! " << std::endl;
-            google::protobuf::io::CodedInputStream input(_currentMessageBuffer, _currentMessageSize);
-            ChatMessage::ChatMessage msg;
-            if(msg.ParseFromCodedStream(&input)) {
-                std::cout << "Message: " << msg.text() << " From: " << msg.sender() << std::endl;
-
+    if(_socket.is_open()) {
+        boost::asio::async_read(_socket,
+                                boost::asio::buffer(_bodyBuffer.data(), _bodyBuffer.size()),
+        [this](boost::system::error_code ec, std::size_t) {
+            if (!ec) {
+                google::protobuf::io::CodedInputStream input(_bodyBuffer.data(), _bodyBuffer.size());
+                ChatMessage::ChatMessage msg;
+                if(msg.ParseFromCodedStream(&input)) {
+                    std::cout << std::setw(16) << msg.sender() <<": " << msg.text() << std::endl;
+                }
+                _bodyBuffer.clear();
+                tryReadHeader();
             }
-            tryReadHeader();
-        }
-        else {
-            std::cout << "read body Error! " << std::endl;
-            _socket.close();
-        }
-    });
+        });
+    }
 }
 
 void ChatClient::close()

@@ -4,9 +4,9 @@
 ChatServer::ChatServer(boost::asio::io_service &io_service, const boost::asio::ip::tcp::endpoint &endpoint)
     : _acceptor(io_service, endpoint),
       _socket(io_service),
-      _io_service(io_service)
+      _io_service(io_service),
+      _room(new ChatRoom())
 {
-    _room = new ChatRoom();
     doAccept();
 }
 
