@@ -13,9 +13,8 @@
 
 class ChatClient
 {
-    boost::asio::io_service& io_service_;
+    boost::asio::io_service& _io_service;
     boost::asio::ip::tcp::socket _socket;
-
     char _temp;
     std::vector<google::protobuf::uint8> _headerBuffer;
     std::vector<google::protobuf::uint8> _bodyBuffer;
@@ -23,19 +22,17 @@ class ChatClient
 public:
     ChatClient(boost::asio::io_service& io_service,
                boost::asio::ip::tcp::resolver::iterator end_iterator)
-        : io_service_(io_service),
+        : _io_service(io_service),
           _socket(io_service)
     {
         do_connect(end_iterator);
     }
 
     std::vector<google::protobuf::uint8> createBufferFromMessage(const ChatMessage::ChatMessage & message);
-
     void write(const ChatMessage::ChatMessage& msg);
     void close();
     void tryReadHeader();
     void tryReadBody();
-
 
 private:
     void do_connect(boost::asio::ip::tcp::resolver::iterator end_iterator)
@@ -47,7 +44,6 @@ private:
             }
         });
     }
-
 };
 
 #endif // CHATCLIENT_H

@@ -11,7 +11,6 @@
 #include <cds/init.h>
 #include <cds/gc/hp.h>
 
-
 class ThreadRunner // Wrapper for libcds initialization
 {
     boost::asio::io_service & io_service;
@@ -34,26 +33,24 @@ int main(int argc, char* argv[])
     cds::gc::HP hpGC;
     cds::threading::Manager::attachThread();
 
-    try {
-        if (argc < 2) {
-            std::cerr << "Usage: chat_server <port> [<port> ...]\n";
-            return 1;
-        }
+    unsigned int threadCount = 1;
+    unsigned int port = 1234;
 
-        boost::asio::io_service io_service(4);
+    try {
+        boost::asio::io_service io_service(threadCount);
         ThreadRunner runner(io_service);
         boost::thread_group threads;
-        std::list<ChatServer> servers;
-        for (int i = 1; i < argc; ++i) {
-            boost::asio::ip::tcp::endpoint endpoint(boost::asio::ip::tcp::v4(), std::atoi(argv[i]));
-            servers.emplace_back(io_service, endpoint);
-        }
 
-        for (int i = 0; i < 4; ++i) {
+        boost::asio::ip::tcp::endpoint endpoint(boost::asio::ip::tcp::v4(), port);
+        ChatServer server(io_service,endpoint);
+
+        for (int i = 0; i < threadCount; ++i) {
             threads.create_thread(boost::bind(&ThreadRunner::start, &runner));
         }
-        std::cout << "Running!" << std::endl;
+
+        std::cout << "Server started..." << std::endl;
         std::cin.get();
+        std::cout << "Shutdown..." << std::endl;
         io_service.stop();
 
         threads.join_all();

@@ -2,7 +2,7 @@
 
 
 ChatSession::ChatSession(boost::asio::io_service &io_service, boost::asio::ip::tcp::socket socket, ChatRoom * room)
-    : _socket(std::move(socket)), _room(room), _io_service(io_service), _currentMessageBuffer(0), _currentMessageSize(0), _temp(0)
+    : _socket(std::move(socket)), _room(room), _io_service(io_service), _temp(0)
 {
     room->subscribe(this);
 }

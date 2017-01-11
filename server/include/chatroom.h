@@ -22,11 +22,11 @@ typedef cds::container::IterableList< cds::gc::HP, ChatSubscriber*,
         typename cds::container::iterable_list::make_traits<
         cds::container::opt::compare< StupidPointerComparator >
         >::type
-        >     option_based_list;
+        > ClientsList;
 
 class ChatRoom
 {
-    option_based_list _list;
+    ClientsList _list;
 public:
     ChatRoom();
     ~ChatRoom();

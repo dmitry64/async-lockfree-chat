@@ -14,9 +14,6 @@ class ChatSession : public ChatSubscriber
     std::vector<google::protobuf::uint8> _headerBuffer;
     std::vector<google::protobuf::uint8> _bodyBuffer;
     char _temp;
-    unsigned int _currentMessageSize;
-    unsigned char * _currentMessageBuffer;
-
     boost::asio::io_service& _io_service;
 public:
     ChatSession(boost::asio::io_service& io_service, boost::asio::ip::tcp::socket socket, ChatRoom * room);

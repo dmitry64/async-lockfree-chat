@@ -75,7 +75,7 @@ void ChatClient::tryReadBody()
 
 void ChatClient::close()
 {
-    io_service_.post([this]() {
+    _io_service.post([this]() {
         _socket.close();
     });
 }

@@ -2,7 +2,7 @@
 #define CHATSUBSCRIBER_H
 #include <iostream>
 #include "ChatMessage.pb.h"
-#include <boost/lockfree/queue.hpp>
+#include <boost/shared_ptr.hpp>
 
 class ChatSubscriber : public std::enable_shared_from_this<ChatSubscriber>
 {
