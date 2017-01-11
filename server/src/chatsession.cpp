@@ -38,58 +38,18 @@ std::pair<char *, unsigned int> ChatSession::createBufferFromMessage(const ChatM
     return buffer;
 }
 
-/*void ChatSession::putMessage(const ChatMessage::ChatMessage &msg)
-{
-    deliver(msg);
-}*/
-
 void ChatSession::putMessage(const ChatMessage::ChatMessage &msg)
 {
-    //auto self(shared_from_this());
     if(!_isDead && _socket.is_open()) {
-        //std::cout << "Delivering: " << msg.text() << " from: " << msg.sender() << std::endl;
-
         auto buf = createBufferFromMessage(msg);
 
         boost::asio::async_write(_socket,
-                                 boost::asio::buffer(buf.first,
-                                         buf.second),
+                                 boost::asio::buffer(buf.first, buf.second),
         [this, msg, buf](boost::system::error_code ec, std::size_t ) {
             delete[] buf.first;
-
-            if(!ec) {
-                //std::cout << "Send!" << std::endl;
-            }
-            else {
-                //std::cout << "send Error!" << std::endl;
-
-                //_room->unsubscribe(this);
-            }
         });
     }
 }
-
-/*void ChatSession::invalidate()
-{
-    std::cout << "prepareToSync" << std::endl;
-    auto self(shared_from_this());
-    if(!_isDead) {
-        _io_service.post(
-        [this, self]() {
-            std::cout << "sync post" << std::endl;
-            SimpleMessage msg;
-            if(!_messages->empty()) {
-                if(_messages->pop(msg)){
-                    //std::cout << "Pop: " << msg.text << " from: " << msg.sender << std::endl;
-                    deliver(msg);
-                }
-            }
-            std::cout << "sync post end" << std::endl;
-            //_valid = true;
-        });
-    } else {
-    }
-}*/
 
 void ChatSession::tryReadHeader()
 {
@@ -100,11 +60,9 @@ void ChatSession::tryReadHeader()
         [this, self](boost::system::error_code ec, std::size_t) {
             if (!ec) {
                 _bytesArray.push_back(_temp);
-                //std::cout << "Got char! " << _temp << std::endl;
                 google::protobuf::io::CodedInputStream input(_bytesArray.data(),_bytesArray.size());
                 google::protobuf::uint32 result;
                 if(input.ReadVarint32(&result)) {
-                    //std::cout << "Incoming message size: " << result << std::endl;
                     _currentMessageSize = result;
                     _currentMessageBuffer = new unsigned char[result];
                     _bytesArray.clear();
@@ -126,7 +84,6 @@ void ChatSession::tryReadBody()
                                 boost::asio::buffer(_currentMessageBuffer, _currentMessageSize),
         [this, self](boost::system::error_code ec, std::size_t) {
             if (!ec) {
-                //std::cout << "Got body! " << std::endl;
                 google::protobuf::io::CodedInputStream input(_currentMessageBuffer, _currentMessageSize);
                 ChatMessage::ChatMessage msg;
                 if(msg.ParseFromCodedStream(&input)) {

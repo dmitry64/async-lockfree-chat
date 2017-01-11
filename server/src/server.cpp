@@ -8,11 +8,11 @@
 #include <boost/asio.hpp>
 #include <boost/thread.hpp>
 #include "chatserver.h"
-#include <cds/init.h>  //cds::Initialize cds::Terminate
-#include <cds/gc/hp.h> //cds::gc::HP (Hazard Pointer)
+#include <cds/init.h>
+#include <cds/gc/hp.h>
 
 
-class ThreadRunner
+class ThreadRunner // Wrapper for libcds initialization
 {
     boost::asio::io_service & io_service;
 public:
@@ -33,14 +33,6 @@ int main(int argc, char* argv[])
     cds::Initialize();
     cds::gc::HP hpGC;
     cds::threading::Manager::attachThread();
-    //std::cout << "Running!" << std::endl;
-    /*option_based_list list;
-    list.insert(6);
-    list.insert(6);
-    list.insert(6);
-    list.insert(6);*/
-    //std::cin.get();
-
 
     try {
         if (argc < 2) {
