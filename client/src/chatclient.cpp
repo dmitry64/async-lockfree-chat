@@ -35,21 +35,22 @@ void ChatClient::do_write()
     //std::cout << "do_write!" << std::endl;
     //if(!_encodedMessages.empty()) {
     usleep(100);
-        boost::asio::async_write(_socket,
-                                 boost::asio::buffer(test.first,
-                                         test.second),
-        [this](boost::system::error_code ec, std::size_t ) {
-            //delete _encodedMessages.front().first;
+    boost::asio::async_write(_socket,
+                             boost::asio::buffer(test.first,
+                                     test.second),
+    [this](boost::system::error_code ec, std::size_t ) {
+        //delete _encodedMessages.front().first;
 
-            if(!ec) {
+        if(!ec) {
 
-               // _encodedMessages.pop_front();
-                //std::cout << "Send!" << std::endl;
-            } else {
-                std::cout << "Error!" << std::endl;
-            }
-            do_write();
-        });
+            // _encodedMessages.pop_front();
+            //std::cout << "Send!" << std::endl;
+        }
+        else {
+            std::cout << "Error!" << std::endl;
+        }
+        do_write();
+    });
     //}
 }
 
@@ -69,10 +70,12 @@ void ChatClient::tryReadHeader()
                 _currentMessageBuffer = new unsigned char[result];
                 _bytesArray.clear();
                 tryReadBody();
-            } else {
+            }
+            else {
                 tryReadHeader();
             }
-        } else {
+        }
+        else {
             std::cout << "read head Error! " << std::endl;
             _socket.close();
         }
@@ -90,11 +93,12 @@ void ChatClient::tryReadBody()
             google::protobuf::io::CodedInputStream input(_currentMessageBuffer, _currentMessageSize);
             ChatMessage::ChatMessage msg;
             if(msg.ParseFromCodedStream(&input)) {
-                //std::cout << "Message: " << msg.text() << " From: " << msg.sender() << std::endl;
+                std::cout << "Message: " << msg.text() << " From: " << msg.sender() << std::endl;
 
             }
             tryReadHeader();
-        } else {
+        }
+        else {
             std::cout << "read body Error! " << std::endl;
             _socket.close();
         }

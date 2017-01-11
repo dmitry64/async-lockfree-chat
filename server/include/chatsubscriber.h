@@ -6,9 +6,10 @@
 
 class ChatSubscriber : public std::enable_shared_from_this<ChatSubscriber>
 {
-
+    unsigned int _id;
 public:
-    class SimpleMessage{
+    class SimpleMessage
+    {
     public:
         char * text;
         char * sender;
@@ -18,10 +19,15 @@ public:
     //virtual void invalidate() = 0;
     virtual void putMessage(const ChatMessage::ChatMessage &msg) = 0;
     bool isDead() const;
+
     //std::atomic<unsigned int> _workersCount;
+    unsigned int id() const;
+
+    void setId(unsigned int id);
+
 protected:
     bool _isDead;
-   // boost::lockfree::queue<SimpleMessage> * _messages;
+    // boost::lockfree::queue<SimpleMessage> * _messages;
 };
 
 #endif // CHATSUBSCRIBER_H

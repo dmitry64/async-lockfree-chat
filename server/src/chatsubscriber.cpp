@@ -1,5 +1,15 @@
 #include "chatsubscriber.h"
 
+unsigned int ChatSubscriber::id() const
+{
+    return _id;
+}
+
+void ChatSubscriber::setId(unsigned int id)
+{
+    _id = id;
+}
+
 ChatSubscriber::ChatSubscriber()
 {
     //_messages = new boost::lockfree::queue<SimpleMessage>(30);

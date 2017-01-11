@@ -5,15 +5,14 @@ ChatSession::ChatSession(boost::asio::io_service &io_service, boost::asio::ip::t
     : _socket(std::move(socket)), _room(room), _io_service(io_service), _currentMessageBuffer(0), _currentMessageSize(0), _temp(0)
 {
     room->subscribe(this);
-    //pthread_spin_init(_spinlock, PTHREAD_PROCESS_PRIVATE);
 }
 
 ChatSession::~ChatSession()
 {
-    //pthread_spin_lock(_spinlock);
     _room->unsubscribe(this);
     _socket.cancel();
     _socket.close();
+    std::cout << "User disconnected" << std::endl;
 }
 
 void ChatSession::start()
@@ -60,7 +59,8 @@ void ChatSession::putMessage(const ChatMessage::ChatMessage &msg)
 
             if(!ec) {
                 //std::cout << "Send!" << std::endl;
-            } else {
+            }
+            else {
                 //std::cout << "send Error!" << std::endl;
 
                 //_room->unsubscribe(this);
@@ -109,11 +109,10 @@ void ChatSession::tryReadHeader()
                     _currentMessageBuffer = new unsigned char[result];
                     _bytesArray.clear();
                     tryReadBody();
-                } else {
+                }
+                else {
                     tryReadHeader();
                 }
-            } else {
-                std::cout << "read head Error! " << std::endl;
             }
         });
     }
@@ -131,14 +130,14 @@ void ChatSession::tryReadBody()
                 google::protobuf::io::CodedInputStream input(_currentMessageBuffer, _currentMessageSize);
                 ChatMessage::ChatMessage msg;
                 if(msg.ParseFromCodedStream(&input)) {
-                    //std::cout << "Message: " << msg.text() << " From: " << msg.sender() << std::endl;
+                    std::cout << "Message: " << msg.text() << " From: " << msg.sender() << std::endl;
                     delete[] _currentMessageBuffer;
                     _room->addMessage(msg);
                 }
                 tryReadHeader();
-            } else {
+            }
+            else {
                 delete[] _currentMessageBuffer;
-                std::cout << "read body Error! " << std::endl;
             }
         });
     }
